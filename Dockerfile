@@ -22,16 +22,11 @@ WORKDIR /app
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy database BEFORE backend source to avoid layer cache issues
-# The DB file changes more often than source code
-COPY backend/data/competitive_research.db /tmp/competitive_research.db
+# Build arg to bust cache when DB data changes
+ARG DATA_VERSION=20260710-2
 
-# Copy backend source (exclude data dir first to avoid old db)
-COPY backend/app/ ./backend/app/
-COPY backend/requirements.txt ./backend/
-
-# Copy the fresh database into place
-RUN cp /tmp/competitive_research.db ./backend/data/competitive_research.db
+# Copy backend source (everything)
+COPY backend/ ./backend/
 
 # Copy built frontend
 COPY --from=frontend-builder /app/frontend/dist/ ./frontend/dist/
