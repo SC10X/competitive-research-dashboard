@@ -3,12 +3,9 @@ FROM node:22-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Enable pnpm and configure to allow esbuild builds
 RUN corepack enable && corepack prepare pnpm@10 --activate
 
 COPY frontend/package.json frontend/pnpm-lock.yaml* ./
-
-# Allow esbuild postinstall scripts (required by vite)
 ENV PNPM_IGNORED_BUILD_SCRIPTS=""
 
 RUN pnpm install --frozen-lockfile
@@ -21,9 +18,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install only what we need
+# Install Python dependencies (cached unless requirements.txt changes)
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy database FIRST (so it gets rebuilt when data changes)
+COPY backend/data/competitive_research.db ./backend/data/
 
 # Copy backend source
 COPY backend/ ./backend/
@@ -31,10 +31,7 @@ COPY backend/ ./backend/
 # Copy built frontend
 COPY --from=frontend-builder /app/frontend/dist/ ./frontend/dist/
 
-# Copy the database (seeded with 469 brands)
-COPY backend/data/competitive_research.db ./backend/data/
-
-# Make sure data dir is writable for SQLite WAL files
+# Ensure writable data dir for SQLite WAL
 RUN mkdir -p /app/backend/data /app/backend/uploads && chmod 777 /app/backend/data /app/backend/uploads
 
 EXPOSE 8000
