@@ -249,5 +249,121 @@ def apply_updates():
     print(f"Startup updates applied: {changes} changes (countries, price_tiers, social URLs)")
 
 
+
+
+# ============================================================
+# 品牌去重合并 — 在启动时自动执行
+# ============================================================
+import re as _re
+
+def _clean_name(name):
+    name = _re.sub(r'\s*[（(][^)）]*[)）]\s*$', '', name)
+    return name.strip()
+
+def _clean_slug(slug):
+    slug = _re.sub(r'-na$', '', slug)
+    slug = _re.sub(r'-beimei$', '', slug)
+    return slug
+
+def dedup_brands():
+    """合并重复品牌：去掉(北美)后缀，合并配对品牌"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
+    cur = conn.cursor()
+
+    beihei_count = cur.execute(
+        "SELECT COUNT(*) FROM brands WHERE name LIKE '%(北美)%' OR name LIKE '%(北美线)%'"
+    ).fetchone()[0]
+
+    if beihei_count == 0:
+        conn.close()
+        return
+
+    print(f"Found {beihei_count} brands with suffix, deduplicating...")
+
+    paired = cur.execute("""
+        SELECT b1.id, b1.name, b2.id, b2.name
+        FROM brands b1
+        JOIN brands b2 ON REPLACE(REPLACE(b1.name, ' (北美)', ''), ' (北美线)', '') = b2.name
+        WHERE b1.name LIKE '%(北美)%'
+        ORDER BY b1.name
+    """).fetchall()
+
+    merged = 0
+    for beihei_id, beihei_name, normal_id, normal_name in paired:
+        for table, dedup_col in [
+            ('competitive_events', 'source_url'),
+            ('social_media_metrics', None),
+            ('financial_performance', 'fiscal_year'),
+            ('customer_sentiment', None),
+            ('pricing_strategy', 'category_name'),
+        ]:
+            rows = cur.execute(f"SELECT * FROM {table} WHERE brand_id = ?", (beihei_id,)).fetchall()
+            if not rows:
+                continue
+            cols = [d[0] for d in cur.description]
+            if dedup_col == 'source_url':
+                existing = set(r[0] for r in cur.execute(f"SELECT {dedup_col} FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall() if r[0])
+            elif dedup_col == 'fiscal_year':
+                existing = set(r[0] for r in cur.execute(f"SELECT {dedup_col} FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall())
+            elif dedup_col == 'category_name':
+                existing = set(r[0] for r in cur.execute(f"SELECT {dedup_col} FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall())
+            else:
+                existing = set()
+                for r in cur.execute(f"SELECT platform, data_as_of FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall():
+                    existing.add((r[0], str(r[1]) if r[1] else ''))
+
+            for row in rows:
+                d = dict(zip(cols, row))
+                if dedup_col == 'source_url':
+                    if d.get(dedup_col, '') in existing:
+                        continue
+                    existing.add(d.get(dedup_col, ''))
+                elif dedup_col in ('fiscal_year', 'category_name'):
+                    if d.get(dedup_col) in existing:
+                        continue
+                    existing.add(d.get(dedup_col))
+                else:
+                    combo = (d.get('platform', ''), str(d.get('data_as_of', '') or ''))
+                    if combo in existing:
+                        continue
+                    existing.add(combo)
+                d['brand_id'] = normal_id
+                d.pop('id', None)
+                c = ', '.join(d.keys())
+                p = ', '.join(['?'] * len(d))
+                cur.execute(f"INSERT INTO {table} ({c}) VALUES ({p})", list(d.values()))
+
+        existing_cids = set(r[0] for r in cur.execute("SELECT category_id FROM brand_categories WHERE brand_id = ?", (normal_id,)).fetchall())
+        for cat_id, is_primary in cur.execute("SELECT category_id, is_primary FROM brand_categories WHERE brand_id = ?", (beihei_id,)).fetchall():
+            if cat_id not in existing_cids:
+                cur.execute("INSERT INTO brand_categories (brand_id, category_id, is_primary) VALUES (?, ?, ?)", (normal_id, cat_id, is_primary))
+                existing_cids.add(cat_id)
+
+        cur.execute("DELETE FROM brands WHERE id = ?", (beihei_id,))
+        merged += 1
+
+    unpaired = cur.execute("""
+        SELECT id, name, slug FROM brands
+        WHERE name LIKE '%(北美)%' OR name LIKE '%(北美线)%'
+        ORDER BY name
+    """).fetchall()
+
+    renamed = 0
+    for bid, name, slug in unpaired:
+        new_name = _clean_name(name)
+        new_slug = _clean_slug(slug)
+        existing = cur.execute("SELECT id FROM brands WHERE slug = ? AND id != ?", (new_slug, bid)).fetchone()
+        if existing:
+            new_slug = f"{new_slug}-intl"
+        cur.execute("UPDATE brands SET name = ?, slug = ?, updated_at = datetime('now') WHERE id = ?", (new_name, new_slug, bid))
+        renamed += 1
+
+    conn.commit()
+    total = cur.execute("SELECT COUNT(*) FROM brands").fetchone()[0]
+    conn.close()
+    print(f"Dedup complete: merged {merged} pairs, renamed {renamed} brands, total now {total}")
+
 if __name__ == '__main__':
     apply_updates()
+    dedup_brands()
