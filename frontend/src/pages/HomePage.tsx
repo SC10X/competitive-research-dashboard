@@ -90,17 +90,19 @@ export default function HomePage() {
           />
           <StatCard
             title="活跃对比组"
-            value={stats.total_brands}
+            value={stats.active_brands}
             icon={<GitCompare className="h-5 w-5" />}
           />
           <StatCard
             title="竞对动态（本月）"
-            value={stats.total_events}
+            value={stats.events_this_month ?? stats.total_events}
             icon={<Activity className="h-5 w-5" />}
           />
           <StatCard
             title="数据更新时间"
-            value={new Date().toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
+            value={stats.last_updated_at
+              ? new Date(stats.last_updated_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+              : new Date().toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
             icon={<Clock className="h-5 w-5" />}
           />
         </div>
@@ -173,7 +175,7 @@ export default function HomePage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <Link
-                        to={`/brands/${event.brand_name?.toLowerCase().replace(/\s+/g, '-') || '#'}`}
+                        to={`/brands/${event.brand_slug || event.brand_name?.toLowerCase().replace(/\s+/g, '-') || '#'}`}
                         className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
                       >
                         {event.brand_name}
@@ -225,8 +227,8 @@ export default function HomePage() {
         <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">快速对比入口</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { tier: 'Luxury', label: '奢侈品牌对比', desc: `${catCounts.apparel + catCounts.footwear + catCounts.bags}个品牌全覆盖` },
-            { tier: 'Premium', label: '高端品牌对比', desc: 'Lululemon, Alo Yoga, On Running 等' },
+            { tier: 'Luxury', label: '奢侈品牌对比', desc: 'Gucci, Balenciaga, Burberry 等' },
+            { tier: 'Premium', label: '高端品牌对比', desc: 'Lululemon, Arc\'teryx, On 等' },
             { tier: 'Mid', label: '中端品牌对比', desc: 'Allbirds, New Balance, Cotopaxi 等' },
             { tier: 'Mass', label: '平价品牌对比', desc: 'Crocs, JanSport, Vans 等' },
           ].map((item) => (

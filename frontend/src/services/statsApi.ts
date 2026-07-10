@@ -8,6 +8,8 @@ export interface StatsOverview {
   total_events: number
   total_financial_records: number
   data_sources_count: number
+  events_this_month?: number
+  last_updated_at?: string
 }
 
 export interface CategoryDistribution {

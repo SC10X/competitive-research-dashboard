@@ -22,12 +22,14 @@ from ..schemas import (
     PriceDistribution,
     CountryDistribution,
 )
+from datetime import date
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 
 
 @router.get("/overview", response_model=ApiResponse[StatsOverview])
 def get_stats_overview(db: Session = Depends(get_db)):
+    from datetime import date
     total_brands = db.execute(select(func.count()).select_from(Brand)).scalar() or 0
     active_brands = db.execute(
         select(func.count()).select_from(select(Brand).where(Brand.is_active == True).subquery())
@@ -36,6 +38,19 @@ def get_stats_overview(db: Session = Depends(get_db)):
     total_events = db.execute(select(func.count()).select_from(CompetitiveEvent)).scalar() or 0
     total_financials = db.execute(select(func.count()).select_from(FinancialPerformance)).scalar() or 0
     data_sources_count = db.execute(select(func.count()).select_from(DataSource)).scalar() or 0
+
+    # Count this month's events
+    today = date.today()
+    month_start = date(today.year, today.month, 1)
+    events_this_month = db.execute(
+        select(func.count()).select_from(CompetitiveEvent)
+        .where(CompetitiveEvent.event_date >= month_start)
+    ).scalar() or 0
+
+    # Get last data update time
+    last_updated = db.execute(
+        select(Brand.updated_at).order_by(Brand.updated_at.desc()).limit(1)
+    ).scalar()
 
     return ApiResponse(
         success=True,
@@ -46,6 +61,8 @@ def get_stats_overview(db: Session = Depends(get_db)):
             total_events=total_events,
             total_financial_records=total_financials,
             data_sources_count=data_sources_count,
+            events_this_month=events_this_month,
+            last_updated_at=last_updated,
         ),
     )
 

@@ -59,6 +59,9 @@ class BrandOut(BaseModel):
     headquarters: Optional[str] = None
     logo_url: Optional[str] = None
     website: Optional[str] = None
+    instagram_url: Optional[str] = None
+    twitter_url: Optional[str] = None
+    tiktok_url: Optional[str] = None
     description: Optional[str] = None
     is_active: bool = True
     price_tier: Optional[str] = None
@@ -216,6 +219,7 @@ class CompetitiveEventOut(BaseModel):
     id: int
     brand_id: int
     brand_name: Optional[str] = None
+    brand_slug: Optional[str] = None
     event_type: str
     title: str
     description: Optional[str] = None
@@ -451,6 +455,8 @@ class StatsOverview(BaseModel):
     total_events: int
     total_financial_records: int
     data_sources_count: int
+    events_this_month: Optional[int] = None
+    last_updated_at: Optional[datetime] = None
 
 
 class PriceDistribution(BaseModel):

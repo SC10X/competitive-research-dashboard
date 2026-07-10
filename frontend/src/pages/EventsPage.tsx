@@ -257,7 +257,7 @@ export default function EventsPage() {
                       <div className="flex flex-col gap-3">
                         <div className="flex flex-wrap items-center gap-2">
                           <Link
-                            to={`/brands/${event.brand_name?.toLowerCase().replace(/\s+/g, '-') || '#'}`}
+                            to={`/brands/${event.brand_slug || event.brand_name?.toLowerCase().replace(/\s+/g, '-') || '#'}`}
                             className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
                           >
                             {event.brand_name}

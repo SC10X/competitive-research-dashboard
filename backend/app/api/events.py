@@ -32,6 +32,7 @@ def _event_to_out(event: CompetitiveEvent) -> CompetitiveEventOut:
         id=event.id,
         brand_id=event.brand_id,
         brand_name=event.brand.name if event.brand else None,
+        brand_slug=event.brand.slug if event.brand else None,
         event_type=event.event_type,
         title=event.title,
         description=event.description,

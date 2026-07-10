@@ -8,6 +8,9 @@ export interface Brand {
   headquarters: string | null
   logo_url: string | null
   website: string | null
+  instagram_url: string | null
+  twitter_url: string | null
+  tiktok_url: string | null
   description: string | null
   is_active: boolean
   price_tier?: string | null
@@ -121,6 +124,7 @@ export interface CompetitiveEvent {
   id: number
   brand_id: number
   brand_name?: string
+  brand_slug?: string
   event_type: string
   title: string
   description: string

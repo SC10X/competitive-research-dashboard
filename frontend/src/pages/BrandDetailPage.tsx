@@ -264,19 +264,18 @@ function DemographicsCard({ brand }: { brand: BrandDetail }) {
 function ProductStrategyCard({ brand }: { brand: BrandDetail }) {
   const ps = brand.product_strategy
 
-  // Parse JSON fields if they're strings
-  const heroProducts: Array<Record<string, unknown>> = typeof ps?.hero_products === 'string'
-    ? JSON.parse(ps.hero_products as string)
-    : (ps?.hero_products as any) || []
-  const recentCollabs: Array<Record<string, unknown>> = typeof ps?.recent_collabs === 'string'
-    ? JSON.parse(ps.recent_collabs as string)
-    : (ps?.recent_collabs as any) || []
-  const techInnovations: Array<Record<string, unknown>> = typeof ps?.tech_innovations === 'string'
-    ? JSON.parse(ps.tech_innovations as string)
-    : (ps?.tech_innovations as any) || []
-  const categoryExpansion: string[] = typeof ps?.category_expansion === 'string'
-    ? JSON.parse(ps.category_expansion as string)
-    : (ps?.category_expansion as any) || []
+  // Safely parse JSON fields
+  const safeJsonParse = (val: unknown, fallback: unknown = []) => {
+    if (typeof val === 'string') {
+      try { return JSON.parse(val) } catch { return fallback }
+    }
+    return val ?? fallback
+  }
+
+  const heroProducts = safeJsonParse(ps?.hero_products, []) as Array<Record<string, unknown>>
+  const recentCollabs = safeJsonParse(ps?.recent_collabs, []) as Array<Record<string, unknown>>
+  const techInnovations = safeJsonParse(ps?.tech_innovations, []) as Array<Record<string, unknown>>
+  const categoryExpansion = safeJsonParse(ps?.category_expansion, []) as string[]
 
   return (
     <Card>
@@ -1083,7 +1082,14 @@ export default function BrandDetailPage() {
   })
 
   const brand = brandData as BrandDetail | undefined
-  const relatedBrands: Brand[] = Array.isArray(allBrands) ? allBrands : ((allBrands as any)?.items || []) as Brand[]
+  const allBrandsList: Brand[] = Array.isArray(allBrands) ? allBrands : ((allBrands as any)?.items || []) as Brand[]
+  
+  // Filter related brands: same price tier, excluding current brand, max 8
+  const relatedBrands: Brand[] = brand
+    ? allBrandsList
+        .filter(b => b.id !== brand.id && b.price_tier === brand.price_tier)
+        .slice(0, 8)
+    : allBrandsList.slice(0, 8)
 
   const tabs = [
     { key: 'positioning', label: '品牌定位', icon: Target },
