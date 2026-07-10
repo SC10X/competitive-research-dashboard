@@ -22,8 +22,8 @@ WORKDIR /app
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Build arg to bust cache when DB data changes
-ARG DATA_VERSION=20260710-2
+# Cache bust: change the echo string to force rebuild of subsequent layers
+RUN echo "cache_bust_20260710_v4"
 
 # Copy backend source (everything)
 COPY backend/ ./backend/
