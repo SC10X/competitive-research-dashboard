@@ -18,18 +18,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Build arg to bust cache when data changes
-ARG CACHE_BUST=1
-
-# Install Python dependencies (cached unless requirements.txt changes)
+# Install Python dependencies
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy database FIRST (so it gets rebuilt when data changes)
-COPY backend/data/competitive_research.db ./backend/data/
-
 # Copy backend source
 COPY backend/ ./backend/
+
+# Overwrite with latest database (must be AFTER backend source COPY)
+COPY backend/data/competitive_research.db ./backend/data/
 
 # Copy built frontend
 COPY --from=frontend-builder /app/frontend/dist/ ./frontend/dist/
