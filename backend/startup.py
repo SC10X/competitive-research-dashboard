@@ -5,6 +5,7 @@ data changes that may not be reflected in the Docker image cache.
 import sqlite3
 import os
 import sys
+import traceback
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'competitive_research.db')
 
@@ -249,8 +250,6 @@ def apply_updates():
     print(f"Startup updates applied: {changes} changes (countries, price_tiers, social URLs)")
 
 
-
-
 # ============================================================
 # 品牌去重合并 — 在启动时自动执行
 # ============================================================
@@ -267,8 +266,12 @@ def _clean_slug(slug):
 
 def dedup_brands():
     """合并重复品牌：去掉(北美)后缀，合并配对品牌"""
+    if not os.path.exists(DB_PATH):
+        return
+
     conn = sqlite3.connect(DB_PATH)
-    conn.execute("PRAGMA foreign_keys = ON")
+    # 关闭外键约束，避免级联删除问题
+    conn.execute("PRAGMA foreign_keys = OFF")
     cur = conn.cursor()
 
     beihei_count = cur.execute(
@@ -291,6 +294,7 @@ def dedup_brands():
 
     merged = 0
     for beihei_id, beihei_name, normal_id, normal_name in paired:
+        # 迁移关联数据到normal品牌
         for table, dedup_col in [
             ('competitive_events', 'source_url'),
             ('social_media_metrics', None),
@@ -298,51 +302,73 @@ def dedup_brands():
             ('customer_sentiment', None),
             ('pricing_strategy', 'category_name'),
         ]:
-            rows = cur.execute(f"SELECT * FROM {table} WHERE brand_id = ?", (beihei_id,)).fetchall()
-            if not rows:
-                continue
-            cols = [d[0] for d in cur.description]
-            if dedup_col == 'source_url':
-                existing = set(r[0] for r in cur.execute(f"SELECT {dedup_col} FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall() if r[0])
-            elif dedup_col == 'fiscal_year':
-                existing = set(r[0] for r in cur.execute(f"SELECT {dedup_col} FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall())
-            elif dedup_col == 'category_name':
-                existing = set(r[0] for r in cur.execute(f"SELECT {dedup_col} FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall())
-            else:
-                existing = set()
-                for r in cur.execute(f"SELECT platform, data_as_of FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall():
-                    existing.add((r[0], str(r[1]) if r[1] else ''))
-
-            for row in rows:
-                d = dict(zip(cols, row))
+            try:
+                rows = cur.execute(f"SELECT * FROM {table} WHERE brand_id = ?", (beihei_id,)).fetchall()
+                if not rows:
+                    continue
+                cols = [d[0] for d in cur.description]
                 if dedup_col == 'source_url':
-                    if d.get(dedup_col, '') in existing:
-                        continue
-                    existing.add(d.get(dedup_col, ''))
-                elif dedup_col in ('fiscal_year', 'category_name'):
-                    if d.get(dedup_col) in existing:
-                        continue
-                    existing.add(d.get(dedup_col))
+                    existing = set(r[0] for r in cur.execute(f"SELECT {dedup_col} FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall() if r[0])
+                elif dedup_col == 'fiscal_year':
+                    existing = set(r[0] for r in cur.execute(f"SELECT {dedup_col} FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall())
+                elif dedup_col == 'category_name':
+                    existing = set(r[0] for r in cur.execute(f"SELECT {dedup_col} FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall())
                 else:
-                    combo = (d.get('platform', ''), str(d.get('data_as_of', '') or ''))
-                    if combo in existing:
-                        continue
-                    existing.add(combo)
-                d['brand_id'] = normal_id
-                d.pop('id', None)
-                c = ', '.join(d.keys())
-                p = ', '.join(['?'] * len(d))
-                cur.execute(f"INSERT INTO {table} ({c}) VALUES ({p})", list(d.values()))
+                    existing = set()
+                    for r in cur.execute(f"SELECT platform, data_as_of FROM {table} WHERE brand_id = ?", (normal_id,)).fetchall():
+                        existing.add((r[0], str(r[1]) if r[1] else ''))
 
-        existing_cids = set(r[0] for r in cur.execute("SELECT category_id FROM brand_categories WHERE brand_id = ?", (normal_id,)).fetchall())
-        for cat_id, is_primary in cur.execute("SELECT category_id, is_primary FROM brand_categories WHERE brand_id = ?", (beihei_id,)).fetchall():
-            if cat_id not in existing_cids:
-                cur.execute("INSERT INTO brand_categories (brand_id, category_id, is_primary) VALUES (?, ?, ?)", (normal_id, cat_id, is_primary))
-                existing_cids.add(cat_id)
+                for row in rows:
+                    d = dict(zip(cols, row))
+                    if dedup_col == 'source_url':
+                        if d.get(dedup_col, '') in existing:
+                            continue
+                        existing.add(d.get(dedup_col, ''))
+                    elif dedup_col in ('fiscal_year', 'category_name'):
+                        if d.get(dedup_col) in existing:
+                            continue
+                        existing.add(d.get(dedup_col))
+                    else:
+                        combo = (d.get('platform', ''), str(d.get('data_as_of', '') or ''))
+                        if combo in existing:
+                            continue
+                        existing.add(combo)
+                    d['brand_id'] = normal_id
+                    d.pop('id', None)
+                    c = ', '.join(d.keys())
+                    p = ', '.join(['?'] * len(d))
+                    try:
+                        cur.execute(f"INSERT INTO {table} ({c}) VALUES ({p})", list(d.values()))
+                    except Exception as e:
+                        print(f"  Skip duplicate in {table}: {e}")
+            except Exception as e:
+                print(f"  Error migrating {table} for {beihei_name}: {e}")
 
+        # 迁移 brand_categories
+        try:
+            existing_cids = set(r[0] for r in cur.execute("SELECT category_id FROM brand_categories WHERE brand_id = ?", (normal_id,)).fetchall())
+            for cat_id, is_primary in cur.execute("SELECT category_id, is_primary FROM brand_categories WHERE brand_id = ?", (beihei_id,)).fetchall():
+                if cat_id not in existing_cids:
+                    cur.execute("INSERT INTO brand_categories (brand_id, category_id, is_primary) VALUES (?, ?, ?)", (normal_id, cat_id, is_primary))
+                    existing_cids.add(cat_id)
+        except Exception as e:
+            print(f"  Error migrating categories for {beihei_name}: {e}")
+
+        # 删除被合并品牌的所有剩余关联记录
+        for table in ['competitive_events', 'social_media_metrics', 'financial_performance',
+                       'customer_sentiment', 'pricing_strategy', 'brand_categories',
+                       'brand_positioning', 'target_demographics', 'product_strategy',
+                       'channel_strategy', 'digital_capability']:
+            try:
+                cur.execute(f"DELETE FROM {table} WHERE brand_id = ?", (beihei_id,))
+            except Exception:
+                pass
+
+        # 删除被合并的品牌
         cur.execute("DELETE FROM brands WHERE id = ?", (beihei_id,))
         merged += 1
 
+    # 重命名未配对的(北美)品牌
     unpaired = cur.execute("""
         SELECT id, name, slug FROM brands
         WHERE name LIKE '%(北美)%' OR name LIKE '%(北美线)%'
@@ -364,6 +390,18 @@ def dedup_brands():
     conn.close()
     print(f"Dedup complete: merged {merged} pairs, renamed {renamed} brands, total now {total}")
 
+
 if __name__ == '__main__':
-    apply_updates()
-    dedup_brands()
+    try:
+        apply_updates()
+    except Exception as e:
+        print(f"WARNING: apply_updates failed: {e}")
+        traceback.print_exc()
+
+    try:
+        dedup_brands()
+    except Exception as e:
+        print(f"WARNING: dedup_brands failed: {e}")
+        traceback.print_exc()
+
+    print("Startup script completed, starting uvicorn...")
