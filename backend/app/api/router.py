@@ -10,6 +10,7 @@ from .data_sources import router as data_sources_router
 from .search import router as search_router
 from .stats import router as stats_router
 from .export import router as export_router
+from .admin import router as admin_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(brands_router)
@@ -22,3 +23,4 @@ api_router.include_router(data_sources_router)
 api_router.include_router(search_router)
 api_router.include_router(stats_router)
 api_router.include_router(export_router)
+api_router.include_router(admin_router)
