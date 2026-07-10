@@ -2,6 +2,7 @@ import type { BrandDetail } from '@/types/brand'
 import { PRICE_TIER_LABELS, PRICE_TIER_COLORS } from '@/types/brand'
 import { useCompareStore } from '@/store/compareStore'
 import { Plus, Check, Globe, ExternalLink, Calendar } from 'lucide-react'
+import { Instagram } from 'lucide-react'
 
 interface BrandHeroProps {
   brand: BrandDetail
@@ -94,6 +95,20 @@ export default function BrandHero({ brand }: BrandHeroProps) {
                 >
                   <Globe className="w-4 h-4" />
                   访问官网
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+              {brand.instagram_url && (
+                <a
+                  href={brand.instagram_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium
+                             bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400
+                             rounded-lg hover:bg-pink-100 dark:hover:bg-pink-900/30 transition-colors"
+                >
+                  <Instagram className="w-4 h-4" />
+                  Instagram
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               )}

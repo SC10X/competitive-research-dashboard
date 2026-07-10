@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import GlobalErrorListener from '@/components/ui/GlobalErrorListener'
 import MainLayout from '@/layouts/MainLayout'
 import HomePage from '@/pages/HomePage'
 import BrandListPage from '@/pages/BrandListPage'
@@ -23,6 +24,7 @@ function NotFoundPage() {
 export default function App() {
   return (
     <ErrorBoundary>
+      <GlobalErrorListener />
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />

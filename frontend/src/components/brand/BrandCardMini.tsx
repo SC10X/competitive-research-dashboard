@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { Instagram } from 'lucide-react'
 import type { Brand } from '@/types/brand'
 import { PRICE_TIER_LABELS, PRICE_TIER_COLORS } from '@/types/brand'
 
@@ -41,11 +42,25 @@ export default function BrandCardMini({ brand }: BrandCardMiniProps) {
         <h4 className="font-medium text-sm text-surface-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
           {brand.name}
         </h4>
-        {brand.price_tier && (
-          <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full mt-1 ${colorClasses}`}>
-            {PRICE_TIER_LABELS[brand.price_tier] || brand.price_tier}
-          </span>
-        )}
+        <div className="flex items-center gap-1.5 mt-1">
+          {brand.price_tier && (
+            <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full ${colorClasses}`}>
+              {PRICE_TIER_LABELS[brand.price_tier] || brand.price_tier}
+            </span>
+          )}
+          {brand.instagram_url && (
+            <a
+              href={brand.instagram_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-surface-400 hover:text-pink-500 dark:text-surface-500 dark:hover:text-pink-400 transition-colors"
+              title="Instagram"
+            >
+              <Instagram className="h-3 w-3" />
+            </a>
+          )}
+        </div>
       </div>
     </div>
   )

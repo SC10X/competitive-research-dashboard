@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { getBrands } from '@/services/brandApi'
 import { getRevenueTrend } from '@/services/trendApi'
-import { useCompareStore } from '@/store/compareStore'
+import { useTrendStore } from '@/store/trendStore'
 import { formatNumber, formatCurrency } from '@/utils/format'
 import type { Brand } from '@/types/brand'
 import {
@@ -25,7 +25,7 @@ import {
 const LINE_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
 export default function TrendsPage() {
-  const { items: basketBrands, addItem, removeItem } = useCompareStore()
+  const { items: basketBrands, addItem, removeItem } = useTrendStore()
   const [selectedMetric, setSelectedMetric] = useState<'revenue' | 'social'>('revenue')
   const currentYear = new Date().getFullYear()
   const [yearStart, setYearStart] = useState(currentYear - 5)
