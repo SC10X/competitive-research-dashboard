@@ -34,9 +34,7 @@ COPY --from=frontend-builder /app/frontend/dist/ ./frontend/dist/
 # Ensure writable data dir for SQLite WAL
 RUN mkdir -p /app/backend/data /app/backend/uploads && chmod 777 /app/backend/data /app/backend/uploads
 
-# Run startup data updates
-RUN python3 backend/startup.py
-
 EXPOSE 8000
 
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run startup data updates before starting the server
+CMD python3 backend/startup.py && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
