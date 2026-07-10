@@ -18,6 +18,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Build arg to bust cache when data changes
+ARG CACHE_BUST=1
+
 # Install Python dependencies (cached unless requirements.txt changes)
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
