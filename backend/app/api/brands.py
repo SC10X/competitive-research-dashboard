@@ -136,6 +136,15 @@ def _serialize_brand_categories(brand: Brand) -> List[BrandCategoryOut]:
 
 
 def _brand_to_detail(brand: Brand) -> BrandDetailOut:
+    # Extract summary fields (same logic as _brand_out_with_summary)
+    price_tier = brand.positioning.price_tier if brand.positioning else None
+    instagram_followers = None
+    for sm in brand.social_media or []:
+        if sm.platform and sm.platform.lower() == "instagram":
+            instagram_followers = sm.followers
+            break
+    monthly_web_visits = brand.digital.monthly_web_visits if brand.digital else None
+
     return BrandDetailOut(
         id=brand.id,
         name=brand.name,
@@ -146,8 +155,14 @@ def _brand_to_detail(brand: Brand) -> BrandDetailOut:
         headquarters=brand.headquarters,
         logo_url=brand.logo_url,
         website=brand.website,
+        instagram_url=brand.instagram_url,
+        twitter_url=brand.twitter_url,
+        tiktok_url=brand.tiktok_url,
         description=brand.description,
         is_active=brand.is_active,
+        price_tier=price_tier,
+        instagram_followers=instagram_followers,
+        monthly_web_visits=monthly_web_visits,
         created_at=brand.created_at,
         updated_at=brand.updated_at,
         categories=_serialize_brand_categories(brand),

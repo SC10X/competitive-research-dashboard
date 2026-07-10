@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
@@ -22,7 +23,7 @@ import { getEvents } from '@/services/eventApi'
 import { getBrands } from '@/services/brandApi'
 import type { StatsOverview, CategoryDistribution } from '@/services/statsApi'
 import type { CompetitiveEvent, Brand } from '@/types/brand'
-import { EVENT_TYPE_LABELS } from '@/types/brand'
+import { EVENT_TYPE_LABELS, PRICE_TIER_LABELS } from '@/types/brand'
 
 export default function HomePage() {
   const { data: statsData, isLoading: statsLoading } = useQuery({
@@ -49,9 +50,39 @@ export default function HomePage() {
     },
   })
 
+  // Fetch all brands for quick compare section
+  const { data: allBrandsData } = useQuery({
+    queryKey: ['brands', 'all-for-home'],
+    queryFn: async () => {
+      const res = await getBrands({ page_size: 500 })
+      return res.data
+    },
+  })
+
   const stats = statsData as StatsOverview | undefined
   const events = (eventsData?.items || []) as CompetitiveEvent[]
   const brands = (brandsData?.items || []) as Brand[]
+  const allBrands = (allBrandsData?.items || []) as Brand[]
+
+  // Build quick compare entries dynamically from real brand data
+  const quickCompareEntries = useMemo(() => {
+    const tiers = ['Luxury', 'Premium', 'Mid', 'Mass'] as const
+    const tierLabels: Record<string, string> = {
+      Luxury: '奢侈品牌对比',
+      Premium: '高端品牌对比',
+      Mid: '中端品牌对比',
+      Mass: '平价品牌对比',
+    }
+    return tiers.map((tier) => {
+      const tierBrands = allBrands
+        .filter((b) => b.price_tier === tier && !b.name.includes('(北美)'))
+        .slice(0, 4)
+      const desc = tierBrands.length > 0
+        ? tierBrands.map((b) => b.name).join(', ') + ' 等'
+        : PRICE_TIER_LABELS[tier] + '品牌'
+      return { tier, label: tierLabels[tier], desc, count: tierBrands.length }
+    })
+  }, [allBrands])
 
   const { data: catDistData } = useQuery({
     queryKey: ['stats', 'category-distribution'],
@@ -222,16 +253,11 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Quick Compare Entry */}
+      {/* Quick Compare Entry — dynamic from real brand data */}
       <div>
         <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">快速对比入口</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { tier: 'Luxury', label: '奢侈品牌对比', desc: 'Gucci, Balenciaga, Burberry 等' },
-            { tier: 'Premium', label: '高端品牌对比', desc: 'Lululemon, Arc\'teryx, On 等' },
-            { tier: 'Mid', label: '中端品牌对比', desc: 'Allbirds, New Balance, Cotopaxi 等' },
-            { tier: 'Mass', label: '平价品牌对比', desc: 'Crocs, JanSport, Vans 等' },
-          ].map((item) => (
+          {quickCompareEntries.map((item) => (
             <Link key={item.tier} to={`/compare?tier=${item.tier}`}>
               <Card hover className="h-full">
                 <div className="flex items-start justify-between">
