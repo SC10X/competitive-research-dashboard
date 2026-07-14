@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useCompareStore } from '@/store/compareStore'
 import type { Brand } from '@/types/brand'
-import { PRICE_TIER_LABELS, PRICE_TIER_COLORS, CATEGORY_COLORS } from '@/types/brand'
+import { PRICE_TIER_LABELS, PRICE_TIER_COLORS, CATEGORY_COLORS, SCENARIO_COLORS, PRODUCT_CAT_COLORS } from '@/types/brand'
 import { formatNumber } from '@/utils/format'
 import { Plus, Check, Globe, Users } from 'lucide-react'
 
@@ -84,6 +84,8 @@ export default function BrandCard({ brand }: BrandCardProps) {
                 key={cat.id}
                 className={`text-xs px-1.5 py-0.5 rounded ${
                   CATEGORY_COLORS[(cat as any).category_slug || ''] ||
+                  SCENARIO_COLORS[(cat as any).category_slug || ''] ||
+                  PRODUCT_CAT_COLORS[(cat as any).category_slug || ''] ||
                   'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                 }`}
               >

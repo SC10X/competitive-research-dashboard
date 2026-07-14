@@ -1,10 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ChevronRight,
   ChevronDown,
   FolderTree,
+  Dumbbell,
+  Package,
+  Layers,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -14,6 +17,7 @@ import { getCategories } from '@/services/categoryApi'
 import { getBrands } from '@/services/brandApi'
 import type { CategoryTreeNode } from '@/types/brand'
 import type { Brand } from '@/types/brand'
+import { apiClient } from '@/services/api'
 
 interface TreeNodeProps {
   node: CategoryTreeNode
@@ -81,18 +85,28 @@ function TreeNode({ node, selectedSlug, onSelect, expanded, onToggle, depth = 0 
   )
 }
 
+const DIMENSIONS = [
+  { key: 'product', label: '产品大类', icon: Layers, apiParam: 'product' },
+  { key: 'scenario', label: '运动场景', icon: Dumbbell, apiParam: 'scenario' },
+  { key: 'product-cat', label: '细化品类', icon: Package, apiParam: 'product-cat' },
+] as const
+
 export default function CategoriesPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [selectedSlug, setSelectedSlug] = useState<string | null>(slug || null)
   const [selectedName, setSelectedName] = useState('')
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [dimension, setDimension] = useState<string>('product')
 
+  // 按维度获取分类
   const { data: categoriesData, isLoading: catLoading } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', dimension],
     queryFn: async () => {
-      const res = await getCategories()
-      return res.data
+      const res = await apiClient.get('/categories', {
+        params: { dimension: dimension === 'product' ? 'product' : dimension },
+      })
+      return res.data.data
     },
   })
 
@@ -111,8 +125,15 @@ export default function CategoriesPage() {
   const categories = Array.isArray(categoriesData) ? categoriesData : []
   const brands = (brandsData?.items || []) as Brand[]
 
+  const handleDimensionChange = useCallback((dim: string) => {
+    setDimension(dim)
+    setSelectedSlug(null)
+    setSelectedName('')
+    setExpanded(new Set())
+  }, [])
+
   const breadcrumb = useMemo(() => {
-    const parts: { name: string; slug: string }[] = [{ name: '全部分类', slug: '' }]
+    const parts: { name: string; slug: string }[] = [{ name: DIMENSIONS.find(d => d.key === dimension)?.label || '全部分类', slug: '' }]
     const findPath = (nodes: CategoryTreeNode[], target: string, path: {name: string, slug: string}[] = []): {name: string, slug: string}[] | null => {
       for (const node of nodes) {
         if (node.slug === target) return [...path, { name: node.name, slug: node.slug }]
@@ -130,7 +151,7 @@ export default function CategoriesPage() {
       }
     }
     return parts
-  }, [categories, selectedSlug])
+  }, [categories, selectedSlug, dimension])
 
   const handleSelect = (catSlug: string, name: string) => {
     setSelectedSlug(catSlug)
@@ -155,8 +176,31 @@ export default function CategoriesPage() {
       <div>
         <h1 className="text-2xl font-bold text-surface-900 dark:text-white">分类筛选</h1>
         <p className="mt-1 text-surface-500 dark:text-surface-400">
-          按分类浏览品牌
+          按多维度浏览品牌
         </p>
+      </div>
+
+      {/* Dimension Tabs */}
+      <div className="flex gap-1 bg-surface-100 dark:bg-surface-800 rounded-lg p-1 w-fit">
+        {DIMENSIONS.map((dim) => {
+          const Icon = dim.icon
+          const isActive = dimension === dim.key
+          return (
+            <button
+              key={dim.key}
+              type="button"
+              onClick={() => handleDimensionChange(dim.key)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-white dark:bg-surface-700 text-primary-700 dark:text-primary-300 shadow-sm'
+                  : 'text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {dim.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Breadcrumb */}
@@ -185,7 +229,9 @@ export default function CategoriesPage() {
           <Card padding="sm">
             <div className="flex items-center gap-2 px-2 py-2 mb-1">
               <FolderTree className="h-4 w-4 text-surface-400" />
-              <span className="text-sm font-semibold text-surface-900 dark:text-white">分类目录</span>
+              <span className="text-sm font-semibold text-surface-900 dark:text-white">
+                {DIMENSIONS.find(d => d.key === dimension)?.label || '分类'}目录
+              </span>
             </div>
             {catLoading ? (
               <Skeleton variant="text" />
