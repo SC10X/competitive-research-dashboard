@@ -11,6 +11,8 @@ export interface Brand {
   instagram_url: string | null
   twitter_url: string | null
   tiktok_url: string | null
+  youtube_url: string | null
+  amazon_url: string | null
   description: string | null
   is_active: boolean
   price_tier?: string | null

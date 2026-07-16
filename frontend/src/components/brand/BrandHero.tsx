@@ -1,8 +1,10 @@
 import type { BrandDetail } from '@/types/brand'
 import { PRICE_TIER_LABELS, PRICE_TIER_COLORS } from '@/types/brand'
 import { useCompareStore } from '@/store/compareStore'
-import { Plus, Check, Globe, ExternalLink, Calendar } from 'lucide-react'
+import { Plus, Check, Globe, ExternalLink, Calendar, ShoppingBag } from 'lucide-react'
 import { Instagram } from 'lucide-react'
+import { Youtube } from 'lucide-react'
+import { ShoppingCart } from 'lucide-react'
 
 interface BrandHeroProps {
   brand: BrandDetail
@@ -82,20 +84,34 @@ export default function BrandHero({ brand }: BrandHeroProps) {
               </p>
             )}
 
-            {/* Action buttons */}
-            <div className="flex flex-wrap gap-3">
+            {/* Action buttons - 官网 / 亚马逊 / IG / YouTube */}
+            <div className="flex flex-wrap gap-2.5">
               {brand.website && (
                 <a
                   href={brand.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium
                              bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300
                              rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors"
                 >
                   <Globe className="w-4 h-4" />
-                  访问官网
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  官网
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {brand.amazon_url && (
+                <a
+                  href={brand.amazon_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium
+                             bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400
+                             rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  亚马逊
+                  <ExternalLink className="w-3 h-3" />
                 </a>
               )}
               {brand.instagram_url && (
@@ -103,13 +119,27 @@ export default function BrandHero({ brand }: BrandHeroProps) {
                   href={brand.instagram_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium
                              bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400
                              rounded-lg hover:bg-pink-100 dark:hover:bg-pink-900/30 transition-colors"
                 >
                   <Instagram className="w-4 h-4" />
                   Instagram
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {brand.youtube_url && (
+                <a
+                  href={brand.youtube_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium
+                             bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400
+                             rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                >
+                  <Youtube className="w-4 h-4" />
+                  YouTube
+                  <ExternalLink className="w-3 h-3" />
                 </a>
               )}
               <button

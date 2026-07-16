@@ -62,6 +62,8 @@ class BrandOut(BaseModel):
     instagram_url: Optional[str] = None
     twitter_url: Optional[str] = None
     tiktok_url: Optional[str] = None
+    youtube_url: Optional[str] = None
+    amazon_url: Optional[str] = None
     description: Optional[str] = None
     is_active: bool = True
     price_tier: Optional[str] = None
