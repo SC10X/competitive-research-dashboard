@@ -10,3 +10,7 @@ frontend/dist/
 *.log
 /uploads/*
 !/uploads/.gitkeep
+*.zip
+*.tar.gz
+*.db-shm
+*.db-wal
