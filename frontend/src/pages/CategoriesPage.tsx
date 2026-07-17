@@ -17,7 +17,6 @@ import { getCategories } from '@/services/categoryApi'
 import { getBrands } from '@/services/brandApi'
 import type { CategoryTreeNode } from '@/types/brand'
 import type { Brand } from '@/types/brand'
-import { apiClient } from '@/services/api'
 
 interface TreeNodeProps {
   node: CategoryTreeNode
@@ -103,10 +102,8 @@ export default function CategoriesPage() {
   const { data: categoriesData, isLoading: catLoading } = useQuery({
     queryKey: ['categories', dimension],
     queryFn: async () => {
-      const res = await apiClient.get('/categories', {
-        params: { dimension: dimension === 'product' ? 'product' : dimension },
-      })
-      return res.data.data
+      const res = await getCategories(dimension === 'product' ? 'product' : dimension)
+      return (res as any).data
     },
   })
 

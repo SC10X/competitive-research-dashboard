@@ -1,6 +1,7 @@
 import api from './api'
 import type { CategoryTreeNode, ApiResponse } from '../types/brand'
 
-export async function getCategories(): Promise<ApiResponse<CategoryTreeNode[]>> {
-  return api.get('/categories') as Promise<ApiResponse<CategoryTreeNode[]>>
+export async function getCategories(dimension?: string): Promise<ApiResponse<CategoryTreeNode[]>> {
+  const params = dimension ? { dimension } : {}
+  return api.get('/categories', { params }) as Promise<ApiResponse<CategoryTreeNode[]>>
 }
