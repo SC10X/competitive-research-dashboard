@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+// 在 Render 上前后端分离，通过环境变量指定 API 地址
+// 本地开发时用相对路径（Vite proxy 会转发）
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: apiBaseUrl,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 })
