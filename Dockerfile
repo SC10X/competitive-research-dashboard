@@ -23,7 +23,7 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Cache bust: change the echo string to force rebuild of subsequent layers
-RUN echo "cache_bust_20260717_v5"
+RUN echo "cache_bust_20260717_v6_logo_fix"
 
 # Copy backend source (everything)
 COPY backend/ ./backend/
