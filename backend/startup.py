@@ -19,11 +19,34 @@ def apply_updates():
     cur = conn.cursor()
 
     # Ensure columns exist
-    for col in ['instagram_url', 'twitter_url', 'tiktok_url']:
+    for col in ['instagram_url', 'twitter_url', 'tiktok_url', 'youtube_url', 'amazon_url']:
         try:
             cur.execute(f'ALTER TABLE brands ADD COLUMN {col} VARCHAR(300)')
         except:
             pass
+
+    # ── 0. Auto-generate logo_url from website domain using Clearbit ──
+    from urllib.parse import urlparse as _up
+    logo_count = cur.execute(
+        "SELECT COUNT(*) FROM brands WHERE logo_url IS NULL OR logo_url=''"
+    ).fetchone()[0]
+    if logo_count > 0:
+        print(f"Generating logo URLs for {logo_count} brands...")
+        cur.execute("SELECT id, website FROM brands WHERE logo_url IS NULL OR logo_url=''")
+        for bid, website in cur.fetchall():
+            if website:
+                try:
+                    domain = _up(website).netloc or _up(website).path
+                    domain = domain.replace('www.', '').rstrip('/')
+                    if domain:
+                        cur.execute(
+                            "UPDATE brands SET logo_url=?, updated_at=datetime('now') WHERE id=?",
+                            (f'https://logo.clearbit.com/{domain}', bid)
+                        )
+                        changes += 1
+                except Exception:
+                    pass
+        print(f"Generated {changes} logo URLs")
 
     changes = 0
 
