@@ -27,11 +27,6 @@ app.add_middleware(
 # API routes
 app.include_router(api_router)
 
-# Mount /logos static files (downloaded logos from Clearbit)
-LOGOS_DIR = Path(__file__).resolve().parent.parent / "static" / "logos"
-if LOGOS_DIR.exists():
-    app.mount("/logos", StaticFiles(directory=LOGOS_DIR), name="logos")
-
 
 @app.get("/health")
 def health():

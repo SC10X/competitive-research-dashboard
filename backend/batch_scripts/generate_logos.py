@@ -1,7 +1,7 @@
 """
-Generate logo_url for all brands from website domains using Clearbit Logo API.
-Clearbit pattern: https://logo.clearbit.com/{domain}
-This generates URLs that resolve at browser load time — no server-side fetching needed.
+Generate logo_url for all brands from website domains using Favicone API.
+Favicone pattern: https://favicone.com/{domain}
+This service is widely accessible and returns high-resolution favicons.
 """
 import sqlite3
 import os
@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'competitive_research.db')
 
 
-def extract_domain(website: str) -> str:
+def extract_domain(website: str) -> str | None:
     """Extract clean domain from website URL."""
     if not website:
         return None
@@ -42,7 +42,7 @@ def main():
     cur.execute("""
         SELECT id, name, website FROM brands 
         WHERE website IS NOT NULL AND website != '' 
-        AND (logo_url IS NULL OR logo_url = '')
+        AND (logo_url IS NULL OR logo_url = '' OR logo_url LIKE '%clearbit%')
     """)
     brands = cur.fetchall()
     print(f"Found {len(brands)} brands needing logo_url")
@@ -53,7 +53,7 @@ def main():
     for brand_id, name, website in brands:
         domain = extract_domain(website)
         if domain:
-            logo_url = f"https://logo.clearbit.com/{domain}"
+            logo_url = f"https://favicone.com/{domain}"
             cur.execute(
                 "UPDATE brands SET logo_url = ?, updated_at = datetime('now') WHERE id = ?",
                 (logo_url, brand_id)
