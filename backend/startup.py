@@ -427,4 +427,12 @@ if __name__ == '__main__':
         print(f"WARNING: dedup_brands failed: {e}")
         traceback.print_exc()
 
+    # Download logos to local static files for reliable frontend display
+    try:
+        from batch_scripts.download_logos import main as download_logos_main
+        download_logos_main()
+    except Exception as e:
+        print(f"WARNING: download_logos failed: {e}")
+        traceback.print_exc()
+
     print("Startup script completed, starting uvicorn...")
