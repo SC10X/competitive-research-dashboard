@@ -1,7 +1,7 @@
 """
-Generate logo_url for all brands from website domains using Favicone API.
-Favicone pattern: https://favicone.com/{domain}
-This service is widely accessible and returns high-resolution favicons.
+Generate logo_url for all brands from website domains using Icon.Horse API.
+Icon.Horse pattern: https://icon.horse/icon/{domain}
+Returns PNG favicons with high compatibility.
 """
 import sqlite3
 import os
@@ -38,11 +38,11 @@ def main():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    # Get all brands with website but no logo
+    # Get all brands with website but no logo or with old logo source
     cur.execute("""
         SELECT id, name, website FROM brands 
         WHERE website IS NOT NULL AND website != '' 
-        AND (logo_url IS NULL OR logo_url = '' OR logo_url LIKE '%clearbit%')
+        AND (logo_url IS NULL OR logo_url = '' OR logo_url LIKE '%clearbit%' OR logo_url LIKE '%favicone%')
     """)
     brands = cur.fetchall()
     print(f"Found {len(brands)} brands needing logo_url")
@@ -53,7 +53,7 @@ def main():
     for brand_id, name, website in brands:
         domain = extract_domain(website)
         if domain:
-            logo_url = f"https://favicone.com/{domain}"
+            logo_url = f"https://icon.horse/icon/{domain}"
             cur.execute(
                 "UPDATE brands SET logo_url = ?, updated_at = datetime('now') WHERE id = ?",
                 (logo_url, brand_id)

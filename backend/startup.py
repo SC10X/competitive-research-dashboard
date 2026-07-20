@@ -41,7 +41,7 @@ def apply_updates():
                     if domain:
                         cur.execute(
                             "UPDATE brands SET logo_url=?, updated_at=datetime('now') WHERE id=?",
-                            (f'https://favicone.com/{domain}', bid)
+                            (f'https://icon.horse/icon/{domain}', bid)
                         )
                         changes += 1
                 except Exception:

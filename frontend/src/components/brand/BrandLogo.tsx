@@ -46,6 +46,7 @@ export default function BrandLogo({ name, website, logoUrl, size = 'md', classNa
   // Multiple favicon sources for robustness
   const sources = [logoUrl]
   if (domain) {
+    sources.push(`https://icon.horse/icon/${domain}`)
     sources.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=128`)
     sources.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`)
   }
