@@ -1,6 +1,7 @@
 import type { BrandDetail } from '@/types/brand'
 import { PRICE_TIER_LABELS, PRICE_TIER_COLORS } from '@/types/brand'
 import { useCompareStore } from '@/store/compareStore'
+import BrandLogo from '@/components/brand/BrandLogo'
 import { Plus, Check, Globe, ExternalLink, Calendar, ShoppingBag } from 'lucide-react'
 import { Instagram } from 'lucide-react'
 import { Youtube } from 'lucide-react'
@@ -33,19 +34,12 @@ export default function BrandHero({ brand }: BrandHeroProps) {
       <div className="p-6 lg:p-8">
         <div className="flex flex-col sm:flex-row sm:items-start gap-6">
           {/* Avatar */}
-          {brand.logo_url ? (
-            <img
-              src={brand.logo_url}
-              alt={brand.name}
-              className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl object-cover flex-shrink-0"
-            />
-          ) : (
-            <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center flex-shrink-0">
-              <span className="text-primary-600 dark:text-primary-400 font-bold text-3xl lg:text-4xl">
-                {initial}
-              </span>
-            </div>
-          )}
+          <BrandLogo
+            name={brand.name}
+            website={brand.website}
+            logoUrl={brand.logo_url}
+            size="lg"
+          />
 
           {/* Info */}
           <div className="flex-1 min-w-0">

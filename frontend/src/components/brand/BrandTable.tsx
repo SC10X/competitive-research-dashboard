@@ -4,6 +4,7 @@ import type { Brand } from '@/types/brand'
 import { PRICE_TIER_LABELS, PRICE_TIER_COLORS } from '@/types/brand'
 import { formatNumber } from '@/utils/format'
 import { useCompareStore } from '@/store/compareStore'
+import BrandLogo from '@/components/brand/BrandLogo'
 import { Plus, Check, ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, Users, Globe } from 'lucide-react'
 
 interface BrandTableProps {
@@ -156,10 +157,12 @@ export default function BrandTable({ brands }: BrandTableProps) {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     {brand.logo_url ? (
-                      <img
-                        src={brand.logo_url}
-                        alt={brand.name}
-                        className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                      <BrandLogo
+                        name={brand.name}
+                        website={brand.website}
+                        logoUrl={brand.logo_url}
+                        size="sm"
+                        className="rounded-lg!"
                       />
                     ) : (
                       <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center flex-shrink-0">

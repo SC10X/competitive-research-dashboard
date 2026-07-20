@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Instagram } from 'lucide-react'
 import type { Brand } from '@/types/brand'
 import { PRICE_TIER_LABELS, PRICE_TIER_COLORS } from '@/types/brand'
+import BrandLogo from '@/components/brand/BrandLogo'
 
 interface BrandCardMiniProps {
   brand: Brand
@@ -24,10 +25,12 @@ export default function BrandCardMini({ brand }: BrandCardMiniProps) {
     >
       {/* Avatar */}
       {brand.logo_url ? (
-        <img
-          src={brand.logo_url}
-          alt={brand.name}
-          className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+        <BrandLogo
+          name={brand.name}
+          website={brand.website}
+          logoUrl={brand.logo_url}
+          size="sm"
+          className="rounded-lg!"
         />
       ) : (
         <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center flex-shrink-0">

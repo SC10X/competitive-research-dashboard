@@ -3,6 +3,7 @@ import { useCompareStore } from '@/store/compareStore'
 import type { Brand } from '@/types/brand'
 import { PRICE_TIER_LABELS, PRICE_TIER_COLORS, CATEGORY_COLORS, SCENARIO_COLORS, PRODUCT_CAT_COLORS } from '@/types/brand'
 import { formatNumber } from '@/utils/format'
+import BrandLogo from '@/components/brand/BrandLogo'
 import { Plus, Check, Globe, Users } from 'lucide-react'
 
 interface BrandCardProps {
@@ -47,10 +48,11 @@ export default function BrandCard({ brand }: BrandCardProps) {
         {/* Avatar + name */}
         <div className="flex items-start gap-3 mb-3">
           {brand.logo_url ? (
-            <img
-              src={brand.logo_url}
-              alt={brand.name}
-              className="w-12 h-12 rounded-xl object-cover flex-shrink-0"
+            <BrandLogo
+              name={brand.name}
+              website={brand.website}
+              logoUrl={brand.logo_url}
+              size="md"
             />
           ) : (
             <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center flex-shrink-0">

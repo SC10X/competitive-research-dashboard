@@ -26,6 +26,7 @@ function extractDomain(url: string): string | null {
 }
 
 export default function BrandLogo({ name, website, logoUrl, size = 'md', className = '' }: BrandLogoProps) {
+  const [sourceIndex, setSourceIndex] = useState(0)
   const [error, setError] = useState(false)
 
   const initial = name.charAt(0).toUpperCase()
@@ -40,28 +41,18 @@ export default function BrandLogo({ name, website, logoUrl, size = 'md', classNa
     )
   }
 
-  const imageUrl = logoUrl
-
-  return (
-    <img
-      src={imageUrl}
-      alt={name}
-      onError={() => setError(true)}
-      className={`${sizeClasses} rounded-2xl object-cover flex-shrink-0 ${className}`}
-      loading="lazy"
-    />
-  )
-}
-
-// Google Favicon based logo (fallback when Clearbit is blocked)
-export function BrandLogoFavicon({ name, website, size = 'md', className = '' }: BrandLogoProps) {
-  const [error, setError] = useState(false)
-  const initial = name.charAt(0).toUpperCase()
-  const colorClasses = 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400'
-  const sizeClasses = sizeMap[size]
   const domain = website ? extractDomain(website) : null
 
-  if (!domain || error) {
+  // Multiple favicon sources for robustness
+  const sources = [logoUrl]
+  if (domain) {
+    sources.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=128`)
+    sources.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`)
+  }
+
+  const currentSrc = sources[sourceIndex] || null
+
+  if (!currentSrc) {
     return (
       <div className={`${sizeClasses} rounded-2xl ${colorClasses} flex items-center justify-center flex-shrink-0 ${className}`}>
         <span className="font-bold">{initial}</span>
@@ -69,11 +60,19 @@ export function BrandLogoFavicon({ name, website, size = 'md', className = '' }:
     )
   }
 
+  const handleError = () => {
+    if (sourceIndex < sources.length - 1) {
+      setSourceIndex(sourceIndex + 1)
+    } else {
+      setError(true)
+    }
+  }
+
   return (
     <img
-      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+      src={currentSrc}
       alt={name}
-      onError={() => setError(true)}
+      onError={handleError}
       className={`${sizeClasses} rounded-2xl object-cover flex-shrink-0 ${className}`}
       loading="lazy"
     />
